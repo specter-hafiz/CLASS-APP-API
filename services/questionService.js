@@ -6,7 +6,7 @@ const Assessment = require("../models/assessmentModel");
 const apiKey = process.env.GEMINI_API_KEY;
 const genAI = new GoogleGenerativeAI(apiKey);
 
-async function generateMCQs(passage, numQuestions = 3) {
+async function generateMCQs(passage, numQuestions = 5) {
   const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
   const prompt = `

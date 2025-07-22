@@ -2,7 +2,11 @@ const express = require("express");
 const router = express.Router();
 const questionController = require("../controllers/questionController");
 const validate = require("../middlewares/validate");
-const { generateQuestionsSchema } = require("../validators/questionValidator");
+const {
+  generateQuestionsSchema,
+  getQuestionsSchema,
+  submitResponseSchema,
+} = require("../validators/questionValidator");
 const authenticate = require("../middlewares/authMiddleware");
 router.post(
   "/generate",
@@ -10,8 +14,17 @@ router.post(
   authenticate,
   questionController.generateQuestions
 );
-router.get("/shared/:id", authenticate, questionController.getSharedQuestions);
-router.post("/respond/:id", questionController.submitAssessmentResponse);
+router.get(
+  "/shared/:id",
+  authenticate,
+  validate(getQuestionsSchema),
+  questionController.getSharedQuestions
+);
+router.post(
+  "/respond/:id",
+  validate(submitResponseSchema),
+  questionController.submitAssessmentResponse
+);
 
 module.exports = router;
 
