@@ -55,6 +55,7 @@ const login = async ({ email, password }) => {
   }
   const accessToken = signAccessToken(user);
   const refreshToken = signRefreshToken(user);
+  user.accessToken = accessToken;
   user.refreshToken = refreshToken;
   await user.save();
   const userToSend = user.toObject();
@@ -62,7 +63,7 @@ const login = async ({ email, password }) => {
   delete userToSend.otp;
   delete userToSend.otpExpires;
 
-  return { accessToken, user: userToSend };
+  return { user: userToSend };
 };
 
 const googleLogin = async ({ email, name, googleId }) => {
