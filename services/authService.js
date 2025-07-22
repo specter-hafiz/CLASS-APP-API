@@ -62,7 +62,7 @@ const login = async ({ email, password }) => {
   delete userToSend.otp;
   delete userToSend.otpExpires;
 
-  return { accessToken, refreshToken, user: userToSend };
+  return { accessToken, user: userToSend };
 };
 
 const googleLogin = async ({ email, name, googleId }) => {
