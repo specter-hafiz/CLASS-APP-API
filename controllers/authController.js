@@ -5,7 +5,7 @@ const signup = async (req, res) => {
   try {
     const response = await authService.signup(req.body);
     res.status(201).json({
-      success: response,
+      email: response,
       message:
         "User registered successfully. Please check your email for an OTP code to verify your identity.",
     });

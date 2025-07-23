@@ -15,7 +15,7 @@ const signup = async ({ email, password, name }) => {
   const user = new User({ email, password: hashedPassword, name });
   console.log(user);
   await sendOtpToEmail(user);
-  return true;
+  return user.email;
 };
 
 const handleTokenRefresh = async (refreshToken) => {
