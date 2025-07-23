@@ -48,7 +48,7 @@ const login = async ({ email, password }) => {
   if (!user) throw new Error("User not found");
 
   const match = await comparePassword(password, user.password);
-  if (!match) throw new Error("Invalid password");
+  if (!match) throw new Error("Invalid credentials");
   if (!user.isVerified) {
     await sendOtpToEmail(user);
     throw new Error("User not verified. Please check your email for the OTP.");
