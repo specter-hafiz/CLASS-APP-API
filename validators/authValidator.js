@@ -65,7 +65,7 @@ const changePasswordSchema = {
 const verifyOtpSchema = {
   body: z.object({
     email: z.string().email("Invalid email format"),
-    otp: z.string().length(5, "OTP must be exactly 6 characters"),
+    otp: z.string().length(5, "OTP must be exactly 5 characters"),
   }),
 };
 
