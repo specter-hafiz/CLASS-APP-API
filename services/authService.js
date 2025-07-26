@@ -1,6 +1,5 @@
 const User = require("../models/userModel");
 const { hashPassword, comparePassword } = require("../utils/hash");
-const AppError = require("../errors/appError");
 const {
   verifyRefreshToken,
   signAccessToken,
@@ -52,10 +51,7 @@ const login = async ({ email, password }) => {
   if (!match) throw new Error("Invalid credentials");
   if (!user.isVerified) {
     await sendOtpToEmail(user);
-    throw new AppError(
-      "User not verified. Please check your email for the OTP.",
-      403
-    );
+    throw new Error("User not verified. Please check your email for the OTP.");
   }
   const accessToken = signAccessToken(user);
   const refreshToken = signRefreshToken(user);
