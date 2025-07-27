@@ -1,5 +1,6 @@
 const { success } = require("zod/v4");
 const authService = require("../services/authService");
+const AppError = require("../errors/appError");
 
 const signup = async (req, res) => {
   try {
@@ -19,7 +20,11 @@ const login = async (req, res) => {
     const response = await authService.login(req.body);
     res.status(200).json({ message: "Login successful", response });
   } catch (err) {
-    res.status(400).json({ message: err.message });
+    console.error("Login error:", err.statusCode);
+    const statusCode = err.statusCode || 400;
+    console.log(err instanceof AppError); // Should be true
+    console.log(err instanceof Error);
+    res.status(statusCode).json({ message: err.message });
   }
 };
 const refreshToken = async (req, res) => {

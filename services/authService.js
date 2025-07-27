@@ -51,7 +51,7 @@ const login = async ({ email, password }) => {
   const match = await comparePassword(password, user.password);
   if (!match) throw new Error("Invalid credentials");
   if (!user.isVerified) {
-    await sendOtpToEmail(user);
+    // await sendOtpToEmail(user);
     throw new AppError(
       "User not verified. Please check your email for the OTP.",
       403
