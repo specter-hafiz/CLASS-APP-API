@@ -1,52 +1,65 @@
-const fs = require("fs");
-const os = require("os");
+// services/audioService.js
+const supabase = require("../utils/superbaseClient");
+const fetch = (...args) =>
+  import("node-fetch").then(({ default: fetch }) => fetch(...args));
+const { v4: uuidv4 } = require("uuid");
 const path = require("path");
-const { exec } = require("child_process");
+const FormData = require("form-data");
 
-const runWhisper = (filePath) => {
-  const scriptPath = path.join(__dirname, "../python/whisper_transcribe.py");
+const uploadToSupabase = async (file) => {
+  const { originalname, mimetype, buffer } = file;
+  const fileExt = path.extname(originalname);
+  const fileName = `${uuidv4()}${fileExt}`;
+  const filePath = `audios/${fileName}`;
 
-  return new Promise((resolve, reject) => {
-    exec(
-      `python3 "${scriptPath}" "${filePath}"`,
-      { encoding: "utf8" },
-      (error, stdout, stderr) => {
-        if (error) return reject(stderr || error.message);
-        resolve(stdout.trim());
-      }
-    );
-  });
-};
-
-exports.handleAudioTranscription = async (file) => {
-  const originalname = file.originalname || "audio.wav";
-  const tempPath = path.join(os.tmpdir(), Date.now() + "-" + originalname);
-
-  try {
-    fs.writeFileSync(tempPath, file.buffer);
-    const transcript = await runWhisper(tempPath);
-    return transcript;
-  } finally {
-    if (fs.existsSync(tempPath)) {
-      fs.unlinkSync(tempPath);
-    }
-  }
-};
-
-exports.estimateTime = (filePath) => {
-  return new Promise((resolve, reject) => {
-    const scriptPath = path.join(__dirname, "../python/whisper_estimate.py");
-    exec(`python3 "${scriptPath}" "${filePath}"`, (error, stdout, stderr) => {
-      if (error) {
-        return reject(new Error(stderr || error.message));
-      }
-
-      try {
-        const result = JSON.parse(stdout.trim());
-        resolve(result);
-      } catch (err) {
-        reject(new Error("Invalid output format from estimation script"));
-      }
+  const { error } = await supabase.storage
+    .from("audio-recordings")
+    .upload(filePath, buffer, {
+      contentType: mimetype,
+      upsert: true,
     });
-  });
+
+  if (error) throw new Error("Failed to upload to Supabase: " + error.message);
+
+  const { data } = supabase.storage
+    .from("audio-recordings")
+    .getPublicUrl(filePath);
+  return data.publicUrl;
+};
+
+const transcribeAudioFromUrl = async (fileUrl) => {
+  const fileResponse = await fetch(fileUrl);
+  console.log(fileResponse.mimetype);
+  console.log("Fetching audio file from URL: %s", fileUrl);
+  console.log("File response status:", fileResponse.status);
+  console.log(fileResponse.type);
+  const formData = new FormData();
+  formData.append("file", fileUrl);
+  formData.append("language", "english");
+  formData.append("response_format", "json");
+
+  const response = await fetch(
+    "https://api.lemonfox.ai/v1/audio/transcriptions",
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${process.env.LEMONFOX_API_KEY}`,
+        ...formData.getHeaders(),
+      },
+      body: formData,
+    }
+  );
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Lemonfox error: ${errorText}`);
+  }
+
+  const data = await response.json();
+  return data.text;
+};
+
+module.exports = {
+  uploadToSupabase,
+  transcribeAudioFromUrl,
 };

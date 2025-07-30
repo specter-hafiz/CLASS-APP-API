@@ -1,42 +1,39 @@
-const transcribeService = require("../services/audioService");
+// controllers/audioController.js
+const {
+  uploadToSupabase,
+  transcribeAudioFromUrl,
+} = require("../services/audioService");
 
-exports.transcribeAudio = async (req, res) => {
+const handleAudioUploadAndTranscription = async (req, res) => {
   try {
-    if (!req.file) {
-      return res.status(400).json({ message: "No audio file provided" });
-    }
-    console.log("Mimetype:", req.file.mimetype);
-    console.log("Buffer size:", req.file.buffer.length, "bytes");
-    console.log("File path:", req.filePath);
-    const transcript = await transcribeService.handleAudioTranscription(
-      req.file
-    );
+    const file = req.file;
+    if (!file)
+      return res
+        .status(400)
+        .json({ success: false, message: "No file uploaded" });
+    console.log("Received file:", file.originalname);
+    console.log("File size:", file.size, "bytes");
+    console.log("File type:", file.mimetype);
+    console.log("File buffer length:", file.buffer.length);
+
+    const publicUrl = await uploadToSupabase(file);
+    const transcription = await transcribeAudioFromUrl(publicUrl);
 
     res.status(200).json({
       success: true,
-      transcript,
+      url: publicUrl,
+      transcription,
     });
   } catch (error) {
+    console.error("Error:", error.message);
     res.status(500).json({
       success: false,
-      message: "Transcription failed",
-      error: error.toString(),
+      message: "Audio transcription failed",
+      error: error.message,
     });
   }
 };
 
-exports.estimateTranscriptionTime = async (req, res) => {
-  try {
-    const filePath = req.body.filePath;
-    if (!filePath) {
-      return res
-        .status(400)
-        .json({ success: false, message: "File path is required" });
-    }
-
-    const result = await transcribeService.estimateTime(filePath);
-    res.status(200).json(result);
-  } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
-  }
+module.exports = {
+  handleAudioUploadAndTranscription,
 };
