@@ -10,7 +10,7 @@ const routeNotFound = require("./middlewares/routeNotFoundMiddleware");
 const app = express();
 app.use(cors());
 app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.urlencoded({ extended: true, limit: "50mb" }));
 
 app.use("/api/v1", routes);
 
