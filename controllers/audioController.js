@@ -1,10 +1,11 @@
 // controllers/audioController.js
+const { success } = require("zod/v4");
 const {
   uploadToSupabase,
   transcribeAudioFromUrl,
 } = require("../services/audioService");
 
-const handleAudioUploadAndTranscription = async (req, res) => {
+const handleAudioUpload = async (req, res) => {
   try {
     const file = req.file;
     if (!file)
@@ -17,23 +18,33 @@ const handleAudioUploadAndTranscription = async (req, res) => {
     console.log("File buffer length:", file.buffer.length);
 
     const publicUrl = await uploadToSupabase(file);
-    const transcription = await transcribeAudioFromUrl(publicUrl);
 
     res.status(200).json({
       success: true,
       url: publicUrl,
-      transcription,
     });
   } catch (error) {
     console.error("Error:", error.message);
     res.status(500).json({
       success: false,
-      message: "Audio transcription failed",
+      message: "Audio upload failed",
       error: error.message,
     });
   }
 };
 
+const handleAudioTranscription = async (req, res) => {
+  try {
+    const { audioUrl } = req.body;
+    if (!audioUrl) {
+      return res.status(400).json({ error: "audioUrl is required" });
+    }
+    const transcription = await transcribeAudioFromUrl(audioUrl);
+    res.status(200).json({ success: true, transcript: transcription });
+  } catch (e) {}
+};
+
 module.exports = {
-  handleAudioUploadAndTranscription,
+  handleAudioUpload,
+  handleAudioTranscription,
 };

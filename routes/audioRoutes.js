@@ -5,16 +5,12 @@ const upload = require("../middlewares/upload");
 const authenticate = require("../middlewares/authMiddleware");
 
 router.post(
-  "/transcribe",
+  "/upload",
   upload.single("audio"),
   authenticate,
-  audioController.handleAudioUploadAndTranscription
+  audioController.handleAudioUpload
 );
 
-// router.post(
-//   "/estimate-time",
-//   upload.single("audio"),
-//   audioController.estimateTranscriptionTime
-// );
+router.post("/transcribe", audioController.handleAudioTranscription);
 
 module.exports = router;
