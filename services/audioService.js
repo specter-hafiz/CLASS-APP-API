@@ -24,15 +24,14 @@ const uploadToSupabase = async (file) => {
   const { data } = supabase.storage
     .from("audio-recordings")
     .getPublicUrl(filePath);
+  console.log("Uploaded audio file accessible at:", data.publicUrl);
   return data.publicUrl;
 };
 
 const transcribeAudioFromUrl = async (fileUrl) => {
   const fileResponse = await fetch(fileUrl);
-  console.log(fileResponse.mimetype);
   console.log("Fetching audio file from URL: %s", fileUrl);
   console.log("File response status:", fileResponse.status);
-  console.log(fileResponse.type);
   const formData = new FormData();
   formData.append("file", fileUrl);
   formData.append("language", "english");

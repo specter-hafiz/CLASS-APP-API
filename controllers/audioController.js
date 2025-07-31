@@ -39,9 +39,18 @@ const handleAudioTranscription = async (req, res) => {
     if (!audioUrl) {
       return res.status(400).json({ error: "audioUrl is required" });
     }
+    console.log(audioUrl);
     const transcription = await transcribeAudioFromUrl(audioUrl);
+    console.log(transcription);
     res.status(200).json({ success: true, transcript: transcription });
-  } catch (e) {}
+  } catch (e) {
+    console.error("Error:", e.message);
+    res.status(500).json({
+      success: false,
+      message: "Transcription failed",
+      error: e.message,
+    });
+  }
 };
 
 module.exports = {

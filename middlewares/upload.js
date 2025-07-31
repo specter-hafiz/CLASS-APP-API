@@ -1,13 +1,24 @@
 const multer = require("multer");
 
-const storage = multer.memoryStorage(); // Store files in memory
+const storage = multer.memoryStorage();
 const upload = multer({
   storage,
-  limits: { fileSize: 50 * 1024 * 1024 }, // 10MB max size (adjust if needed)
+  limits: { fileSize: 50 * 1024 * 1024 }, // 50MB
   fileFilter: function (req, file, cb) {
-    if (file.mimetype.startsWith("audio/")) {
+    const allowedTypes = [
+      "audio/mpeg",
+      "audio/mp3",
+      "audio/wav",
+      "audio/x-wav",
+      "audio/webm",
+      "audio/ogg",
+      "audio/x-m4a",
+    ];
+
+    if (allowedTypes.includes(file.mimetype)) {
       cb(null, true);
     } else {
+      console.error("Rejected file type:", file.mimetype);
       cb(new Error("Only audio files are allowed"), false);
     }
   },
