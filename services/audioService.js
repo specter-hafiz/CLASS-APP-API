@@ -30,8 +30,9 @@ const uploadToSupabase = async (file) => {
 
 const transcribeAudioFromUrl = async (fileUrl) => {
   const fileResponse = await fetch(fileUrl);
-  console.log("Fetching audio file from URL: %s", fileUrl);
-  console.log("File response status:", fileResponse.status);
+  if (!fileResponse.ok) {
+    throw new Error(`Failed to fetch audio file: ${fileResponse.statusText}`);
+  }
   const formData = new FormData();
   formData.append("file", fileUrl);
   formData.append("language", "english");

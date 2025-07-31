@@ -1,9 +1,11 @@
 // controllers/audioController.js
 const { success } = require("zod/v4");
+const TrancriptModel = require("../models/transcriptModel");
 const {
   uploadToSupabase,
   transcribeAudioFromUrl,
 } = require("../services/audioService");
+const { saveTranscript } = require("../services/transcriptService");
 
 const handleAudioUpload = async (req, res) => {
   try {
@@ -41,7 +43,13 @@ const handleAudioTranscription = async (req, res) => {
     }
     console.log(audioUrl);
     const transcription = await transcribeAudioFromUrl(audioUrl);
-    console.log(transcription);
+    console.log("Transcription result:", transcription);
+    await saveTranscript({
+      audioUrl,
+      transcript: transcription,
+      userId: req.user._id, // Assuming user is authenticated and req.user is set
+    });
+    console.log("Transcript saved successfully");
     res.status(200).json({ success: true, transcript: transcription });
   } catch (e) {
     console.error("Error:", e.message);

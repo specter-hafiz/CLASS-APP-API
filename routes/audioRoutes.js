@@ -11,6 +11,10 @@ router.post(
   audioController.handleAudioUpload
 );
 
-router.post("/transcribe", audioController.handleAudioTranscription);
+router.post(
+  "/transcribe",
+  authenticate,
+  audioController.handleAudioTranscription
+);
 
 module.exports = router;
