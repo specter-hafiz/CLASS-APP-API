@@ -19,6 +19,16 @@ const generateQuestions = asyncHandler(async (req, res) => {
   res.json({ success: true, questions, message, linkId });
 });
 
+const fetchQuizzes = async (req, res) => {
+  const userId = req.user._id;
+  try {
+    const quizzes = await questionService.getUserQuizzes(userId);
+    res.json({ success: true, quizzes });
+  } catch (err) {
+    res.status(err.status || 500).json({ message: err.message });
+  }
+};
+
 const getSharedQuestions = async (req, res) => {
   const userId = req.user._id;
   try {
@@ -47,5 +57,6 @@ const submitAssessmentResponse = async (req, res) => {
 module.exports = {
   generateQuestions,
   getSharedQuestions,
+  fetchQuizzes,
   submitAssessmentResponse,
 };

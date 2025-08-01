@@ -15,13 +15,19 @@ router.post(
   questionController.generateQuestions
 );
 router.get(
+  "/",
+  authenticate,
+  validate(getQuestionsSchema),
+  questionController.fetchQuizzes
+);
+router.get(
   "/shared/:id",
   authenticate,
   validate(getQuestionsSchema),
   questionController.getSharedQuestions
 );
 router.post(
-  "/respond/:id",
+  "/response/:id",
   validate(submitResponseSchema),
   questionController.submitAssessmentResponse
 );

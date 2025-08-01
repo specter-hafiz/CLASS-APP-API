@@ -1,13 +1,14 @@
 const mongoose = require("mongoose");
 
 const assessmentSchema = new mongoose.Schema({
+  userId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
   questions: [{ type: mongoose.Schema.Types.ObjectId, ref: "Question" }],
   sharedLinkId: String,
   expiresAt: { type: Date },
   duration: { type: Number },
   attempts: [
     {
-      userId: String,
+      userId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
       startedAt: Date,
     },
   ],

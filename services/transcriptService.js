@@ -14,6 +14,7 @@ const getTranscriptById = async (id) => {
     if (!transcript) {
       throw new Error("Transcript not found");
     }
+    console.log("Retrieved transcript:", transcript._id);
     return transcript;
   } catch (error) {
     throw new Error("Failed to retrieve transcript");

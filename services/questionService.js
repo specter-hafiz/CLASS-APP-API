@@ -74,6 +74,7 @@ const saveQuestions = async (questions, userId) => {
 
     const sharedLinkId = crypto.randomBytes(12).toString("base64url");
     const assessment = new Assessment({
+      userId,
       questions: saved.map((q) => q._id),
       sharedLinkId,
     });
@@ -82,6 +83,21 @@ const saveQuestions = async (questions, userId) => {
     return { message: "Saved and shared", linkId: sharedLinkId };
   } catch (err) {
     throw err;
+  }
+};
+
+const getUserQuizzes = async (userId) => {
+  try {
+    const quizzes = await Assessment.find({ createdBy: userId });
+    if (!quizzes || quizzes.length === 0) {
+      throw { status: 404, message: "No quizzes found for this user" };
+    }
+    return quizzes;
+  } catch (err) {
+    throw {
+      status: err.status || 500,
+      message: err.message || "Internal server error",
+    };
   }
 };
 
@@ -127,5 +143,6 @@ module.exports = {
   generateMCQs,
   saveQuestions,
   getSharedQuestions,
+  getUserQuizzes,
   submitAssessmentResponse,
 };
