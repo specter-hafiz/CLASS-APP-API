@@ -66,7 +66,14 @@ function parseMCQs(rawText) {
   return questions;
 }
 
-const saveQuestions = async (questions, userId) => {
+const saveQuestions = async (
+  questions,
+  userId,
+  title,
+  accessPassword,
+  duration,
+  expiresAt
+) => {
   try {
     const saved = await Question.insertMany(
       questions.map((q) => ({ ...q, createdBy: userId }))
@@ -74,9 +81,13 @@ const saveQuestions = async (questions, userId) => {
 
     const sharedLinkId = crypto.randomBytes(12).toString("base64url");
     const assessment = new Assessment({
-      userId,
+      createdBy: userId,
       questions: saved.map((q) => q._id),
       sharedLinkId,
+      duration,
+      expiresAt,
+      title,
+      accessPassword,
     });
     await assessment.save();
 

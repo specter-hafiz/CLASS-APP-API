@@ -1,11 +1,13 @@
 const mongoose = require("mongoose");
 
 const assessmentSchema = new mongoose.Schema({
-  userId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+  title: { type: String, required: true },
+  createdBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
   questions: [{ type: mongoose.Schema.Types.ObjectId, ref: "Question" }],
   sharedLinkId: String,
-  expiresAt: { type: Date },
-  duration: { type: Number },
+  expiresAt: { type: String, default: true },
+  duration: { type: String, required: true },
+  accessPassword: { type: String, required: true },
   attempts: [
     {
       userId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },

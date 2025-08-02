@@ -2,7 +2,17 @@ const asyncHandler = require("../utils/asyncHandler");
 const questionService = require("../services/questionService");
 
 const generateQuestions = asyncHandler(async (req, res) => {
-  const { transcript, numQuestions } = req.body;
+  const {
+    transcript,
+    numQuestions,
+    title,
+    accessPassword,
+    duration,
+    expiresAt,
+  } = req.body;
+  console.log("User provided transcript:", transcript);
+  console.log("User provided number of questions:", numQuestions);
+  console.log("User provided title:", title);
 
   const questions = await questionService.generateMCQs(
     transcript,
@@ -13,7 +23,11 @@ const generateQuestions = asyncHandler(async (req, res) => {
   }
   const { message, linkId } = await questionService.saveQuestions(
     questions,
-    req.user._id
+    req.user._id,
+    title,
+    accessPassword,
+    duration,
+    expiresAt
   );
 
   res.json({ success: true, questions, message, linkId });

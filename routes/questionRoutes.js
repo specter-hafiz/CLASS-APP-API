@@ -10,16 +10,11 @@ const {
 const authenticate = require("../middlewares/authMiddleware");
 router.post(
   "/generate",
-  validate(generateQuestionsSchema),
+  // validate(generateQuestionsSchema),
   authenticate,
   questionController.generateQuestions
 );
-router.get(
-  "/",
-  authenticate,
-  validate(getQuestionsSchema),
-  questionController.fetchQuizzes
-);
+router.get("/", authenticate, questionController.fetchQuizzes);
 router.get(
   "/shared/:id",
   authenticate,
