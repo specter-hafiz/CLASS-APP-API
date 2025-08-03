@@ -16,6 +16,10 @@ const getQuestionsSchema = {
   params: z.object({
     id: z.string().base64url().min(1, "Link ID is required"),
   }),
+  body: z.object({
+    id: z.string().min(1, "User ID is required"),
+    accessPassword: z.string().min(1, "Access password is required"),
+  }),
 };
 
 // submit assessment response schema
@@ -24,7 +28,7 @@ const submitResponseSchema = {
     id: z.string().base64url().min(1, "Link ID is required"),
   }),
   body: z.object({
-    studentEmail: z.string().email("Invalid email format"),
+    id: z.string().min(1, "User ID is required"),
     answers: z.array(
       z.object({
         questionId: z.string().min(1, "Question ID is required"),

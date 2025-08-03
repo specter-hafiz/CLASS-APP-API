@@ -14,7 +14,12 @@ router.post(
   authenticate,
   questionController.generateQuestions
 );
-router.get("/", authenticate, questionController.fetchQuizzes);
+router.get("/fetch", authenticate, questionController.fetchQuizzes);
+router.get(
+  "/fetch/responses",
+  authenticate,
+  questionController.fetchSubmittedResponses
+);
 router.get(
   "/shared/:id",
   authenticate,
@@ -23,8 +28,9 @@ router.get(
 );
 router.post(
   "/response/:id",
+  authenticate,
   validate(submitResponseSchema),
-  questionController.submitAssessmentResponse
+  questionController.submitAssessment
 );
 
 module.exports = router;

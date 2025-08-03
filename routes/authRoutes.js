@@ -33,6 +33,7 @@ router.post(
   authController.resetPassword
 );
 router.post("/resend-otp", validate(resendOtpSchema), authController.resendOtp);
+router.patch("/edit-profile", authenticate, authController.editProfile);
 router.post(
   "/change-password",
   authenticate,

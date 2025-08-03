@@ -117,6 +117,19 @@ const resetPassword = async ({ email, newPassword }) => {
   return true;
 };
 
+const editProfile = async (userId, updates) => {
+  const user = await User.findByIdAndUpdate(userId, updates, {
+    new: true,
+    runValidators: true,
+  });
+  if (!user) throw new Error("User not found");
+  const userToSend = user.toObject();
+  delete userToSend.password;
+  delete userToSend.otp;
+  delete userToSend.otpExpires;
+  return userToSend;
+};
+
 const resendOtp = async (email) => {
   const user = await User.findOne({ email });
   if (!user) throw new Error("User not found");
@@ -145,6 +158,7 @@ module.exports = {
   signup,
   login,
   googleLogin,
+  editProfile,
   forgotPassword,
   handleTokenRefresh,
   verifyOtp,

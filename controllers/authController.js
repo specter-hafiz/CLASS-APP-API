@@ -76,6 +76,18 @@ const resetPassword = async (req, res) => {
   }
 };
 
+const editProfile = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const updatedUser = await authService.editProfile(userId, req.body);
+    res
+      .status(200)
+      .json({ message: "Profile updated successfully", updatedUser });
+  } catch (err) {
+    res.status(400).json({ message: err.message });
+  }
+};
+
 const resendOtp = async (req, res) => {
   try {
     await authService.resendOtp(req.body.email);
@@ -101,6 +113,7 @@ module.exports = {
   forgotPassword,
   verifyOtp,
   resendOtp,
+  editProfile,
   resetPassword,
   changePassword,
   refreshToken,

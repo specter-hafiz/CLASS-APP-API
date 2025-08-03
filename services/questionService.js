@@ -79,7 +79,7 @@ const saveQuestions = async (
       questions.map((q) => ({ ...q, createdBy: userId }))
     );
 
-    const sharedLinkId = crypto.randomBytes(12).toString("base64url");
+    const sharedLinkId = crypto.randomBytes(6).toString("base64url");
     const assessment = new Assessment({
       createdBy: userId,
       questions: saved.map((q) => q._id),
@@ -99,7 +99,9 @@ const saveQuestions = async (
 
 const getUserQuizzes = async (userId) => {
   try {
-    const quizzes = await Assessment.find({ createdBy: userId });
+    const quizzes = await Assessment.find({ createdBy: userId })
+      .populate("questions")
+      .lean();
     if (!quizzes || quizzes.length === 0) {
       throw { status: 404, message: "No quizzes found for this user" };
     }
@@ -112,48 +114,101 @@ const getUserQuizzes = async (userId) => {
   }
 };
 
-const getSharedQuestions = async (linkId, userId) => {
+const getSharedQuestions = async (sharedLinkId, id, accessPassword) => {
+  console.log("Fetching shared questions for link ID:", sharedLinkId);
   const assessment = await Assessment.findOne({
-    sharedLinkId: linkId,
+    sharedLinkId: sharedLinkId,
+    accessPassword,
   }).populate("questions");
   if (!assessment) throw { status: 404, message: "Assessment not found" };
-
-  if (assessment.expiresAt && assessment.expiresAt < new Date())
+  console.log("Assessment found:", assessment);
+  if (assessment.expiresAt && assessment.expiresAt < new Date().toISOString()) {
+    console.log("Link expired for user:", id);
     throw { status: 403, message: "Link expired" };
-
-  const existing = assessment.attempts.find((a) => a.userId === userId);
+  }
+  const submitted = assessment.responses.find((r) => r.id === id);
+  if (submitted) {
+    throw {
+      status: 403,
+      message: "You have already submitted a response for this assessment.",
+    };
+  }
+  console.log("Link is valid for user:", id);
+  const existing = assessment.attempts.find((a) => a.id === id);
   if (existing) {
+    console.log("Existing attempt found for user:", id);
     return {
       questions: assessment.questions,
       startedAt: existing.startedAt,
+      sharedLinkId: assessment.sharedLinkId,
+      duration: assessment.duration,
+      id: existing.id,
     };
   }
 
   const startedAt = new Date();
-  assessment.attempts.push({ userId, startedAt });
+  assessment.attempts.push({ id, startedAt });
   await assessment.save();
-
+  console.log("New attempt recorded for user:", id);
+  console.log("Assessment started at:", startedAt);
+  console.log("Assessment duration:", assessment.duration);
+  console.log("Questions available:", assessment.questions.length);
+  console.log("Questions details:", assessment.questions);
   return {
     questions: assessment.questions,
     startedAt,
+    sharedLinkId: assessment.sharedLinkId,
+    duration: assessment.duration,
+    id,
   };
 };
 
-const submitAssessmentResponse = async (linkId, { studentEmail, answers }) => {
+const submitAssessmentResponse = async (linkId, userId, { id, answers }) => {
   const assessment = await Assessment.findOne({ sharedLinkId: linkId });
   if (!assessment) throw { status: 404, message: "Assessment not found" };
-
+  console.log("Assessment found:", assessment);
+  if (assessment.expiresAt && assessment.expiresAt < new Date())
+    throw { status: 403, message: "Link expired" };
+  console.log("Link is valid for user:", userId);
+  if (assessment.responses.some((r) => r.id === id)) {
+    throw { status: 403, message: "You have already submitted a response" };
+  }
+  console.log("Recording response for user:", userId);
   const submittedAt = new Date();
-  assessment.responses.push({ studentEmail, answers, submittedAt });
+  assessment.responses.push({ id, answers, submittedAt, userId });
   await assessment.save();
-
+  console.log("Response recorded successfully for user:", userId);
   return { message: "Response recorded" };
+};
+
+const fetchUserSubmittedResponses = async (userId) => {
+  console.log("Fetching submitted responses for user:", userId);
+  const userIdStr = userId.toString();
+  const assessments = await Assessment.find({
+    responses: { $elemMatch: { userId: userIdStr } },
+  }).populate("questions");
+  if (!assessments || assessments.length === 0)
+    throw { status: 404, message: "No assessments found for this user" };
+  console.log("Assessments found:", assessments.length);
+  console.log("Assessments details:", assessments);
+  return assessments.map((assessment) => {
+    const response = assessment.responses.find((r) => r.userId === userIdStr);
+    if (!response) throw { status: 404, message: "Response not found" };
+    console.log("Response found for user:", userId);
+    console.log("Response details:", response);
+    return {
+      response,
+      questions: assessment.questions,
+      title: assessment.title,
+    };
+  });
 };
 
 module.exports = {
   generateMCQs,
   saveQuestions,
   getSharedQuestions,
+  fetchUserSubmittedResponses,
   getUserQuizzes,
   submitAssessmentResponse,
 };

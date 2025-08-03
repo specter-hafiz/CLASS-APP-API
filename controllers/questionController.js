@@ -35,8 +35,10 @@ const generateQuestions = asyncHandler(async (req, res) => {
 
 const fetchQuizzes = async (req, res) => {
   const userId = req.user._id;
+  console.log("Fetching quizzes for user:", userId);
   try {
     const quizzes = await questionService.getUserQuizzes(userId);
+    console.log("Fetched quizzes:", quizzes);
     res.json({ success: true, quizzes });
   } catch (err) {
     res.status(err.status || 500).json({ message: err.message });
@@ -44,22 +46,45 @@ const fetchQuizzes = async (req, res) => {
 };
 
 const getSharedQuestions = async (req, res) => {
-  const userId = req.user._id;
+  const sharedLinkId = req.params.id;
+  const { id, accessPassword } = req.body;
+  console.log("Shared link ID:", sharedLinkId);
+  console.log("User ID:", id);
+  console.log("Access password provided:", accessPassword);
+
   try {
     const result = await questionService.getSharedQuestions(
-      req.params.id,
-      userId
+      sharedLinkId,
+      id,
+      accessPassword
     );
+    console.log("Shared questions fetched successfully:", result);
     res.json(result);
   } catch (err) {
     res.status(err.status || 500).json({ message: err.message });
   }
 };
 
-const submitAssessmentResponse = async (req, res) => {
+const fetchSubmittedResponses = async (req, res) => {
+  const userId = req.user._id;
+  console.log("Fetching submitted responses for user:", userId);
+  try {
+    const responses = await questionService.fetchUserSubmittedResponses(userId);
+    console.log("Fetched submitted responses:", responses);
+    res.json({ success: true, responses });
+  } catch (err) {
+    res.status(err.status || 500).json({ message: err.message });
+  }
+};
+
+const submitAssessment = async (req, res) => {
+  console.log("Submitting assessment response for user:", req.user._id);
+  console.log("Request params:", req.params);
+  console.log("Request body:", req.body);
   try {
     const result = await questionService.submitAssessmentResponse(
       req.params.id,
+      req.user._id,
       req.body
     );
     res.json(result);
@@ -72,5 +97,6 @@ module.exports = {
   generateQuestions,
   getSharedQuestions,
   fetchQuizzes,
-  submitAssessmentResponse,
+  submitAssessment,
+  fetchSubmittedResponses,
 };
