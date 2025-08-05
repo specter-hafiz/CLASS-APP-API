@@ -51,9 +51,11 @@ const googleLogin = async (req, res) => {
 
 const forgotPassword = async (req, res) => {
   try {
-    await authService.forgotPassword(req.body.email);
-    res.status(200).json({ message: "OTP sent to email" });
+    const email = await authService.forgotPassword(req.body.email);
+    console.log(`OTP sent to email: ${email}`);
+    res.status(200).json({ message: "OTP sent to email", email });
   } catch (err) {
+    console.error("Error in forgotPassword:", err);
     res.status(400).json({ message: err.message });
   }
 };
@@ -80,7 +82,9 @@ const editProfile = async (req, res) => {
   try {
     const userId = req.user.id;
     const updatedUser = await authService.editProfile(userId, req.body);
+    console.log(`Updated User: ${updatedUser}`); // Debugging line to check updated user
     res
+
       .status(200)
       .json({ message: "Profile updated successfully", updatedUser });
   } catch (err) {

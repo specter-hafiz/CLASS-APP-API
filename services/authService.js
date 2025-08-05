@@ -81,10 +81,14 @@ const googleLogin = async ({ email, name, googleId }) => {
 };
 
 const forgotPassword = async (email) => {
+  console.log(`Sending OTP to email: ${email}`);
   const user = await User.findOne({ email });
   if (!user) throw new Error("Email not found");
+  if (user.otpExpires && user.otpExpires > Date.now()) {
+    return user.email; // OTP already sent, return email without sending again
+  }
   await sendOtpToEmail(user);
-  return true;
+  return email;
 };
 
 const verifyOtp = async ({ email, otp }) => {
@@ -118,6 +122,7 @@ const resetPassword = async ({ email, newPassword }) => {
 };
 
 const editProfile = async (userId, updates) => {
+  console.log(`Editing profile for user ID: ${userId}`);
   const user = await User.findByIdAndUpdate(userId, updates, {
     new: true,
     runValidators: true,
@@ -143,6 +148,7 @@ const resendOtp = async (email) => {
 };
 
 const changePassword = async ({ userId, oldPassword, newPassword }) => {
+  console.log(`Changing password for user ID: ${userId}`);
   const user = await User.findById(userId);
   if (!user) throw new Error("User not found");
 
@@ -151,6 +157,7 @@ const changePassword = async ({ userId, oldPassword, newPassword }) => {
 
   user.password = await hashPassword(newPassword);
   await user.save();
+  console.log("Password changed successfully for user:", userId);
   return true;
 };
 
