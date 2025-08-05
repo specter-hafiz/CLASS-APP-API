@@ -102,9 +102,7 @@ const getUserQuizzes = async (userId) => {
     const quizzes = await Assessment.find({ createdBy: userId })
       .populate("questions")
       .lean();
-    if (!quizzes || quizzes.length === 0) {
-      throw { status: 404, message: "No quizzes found for this user" };
-    }
+
     return quizzes;
   } catch (err) {
     throw {
