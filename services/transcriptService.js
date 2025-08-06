@@ -2,7 +2,9 @@ const TranscriptModel = require("../models/transcriptModel");
 const supabase = require("../utils/superbaseClient");
 const getTranscriptsByUserId = async (userId) => {
   try {
-    const transcripts = await TranscriptModel.find({ userId });
+    const transcripts = await TranscriptModel.find({ userId }).sort({
+      createdAt: -1,
+    });
     return transcripts;
   } catch (error) {
     throw new Error("Failed to retrieve transcripts");

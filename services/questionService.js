@@ -10,7 +10,7 @@ async function generateMCQs(passage, numQuestions = 5) {
   const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
   const prompt = `
-Generate ${numQuestions} multiple-choice questions based on the following passage.
+Generate ${numQuestions} exact multiple-choice questions based on the following passage.
 Use the format:
 
 Q: [question]
@@ -20,6 +20,8 @@ C. [option C]
 D. [option D]
 Answer: [correct letter]
 
+Answers should not have a pattern and should be varied.
+Do not include any explanations or additional text.
 Passage:
 """
 ${passage}
@@ -79,7 +81,7 @@ const saveQuestions = async (
       questions.map((q) => ({ ...q, createdBy: userId }))
     );
 
-    const sharedLinkId = crypto.randomBytes(6).toString("base64url");
+    const sharedLinkId = crypto.randomBytes(4).toString("base64url");
     const assessment = new Assessment({
       createdBy: userId,
       questions: saved.map((q) => q._id),
@@ -101,6 +103,7 @@ const getUserQuizzes = async (userId) => {
   try {
     const quizzes = await Assessment.find({ createdBy: userId })
       .populate("questions")
+      .sort({ createdAt: -1 })
       .lean();
 
     return quizzes;
@@ -117,7 +120,9 @@ const getSharedQuestions = async (sharedLinkId, id, accessPassword) => {
   const assessment = await Assessment.findOne({
     sharedLinkId: sharedLinkId,
     accessPassword,
-  }).populate("questions");
+  })
+    .populate("questions")
+    .sort({ createdAt: -1 });
   if (!assessment) throw { status: 404, message: "Assessment not found" };
   console.log("Assessment found:", assessment);
   if (assessment.expiresAt && assessment.expiresAt < new Date().toISOString()) {
@@ -160,23 +165,57 @@ const getSharedQuestions = async (sharedLinkId, id, accessPassword) => {
     id,
   };
 };
-
 const submitAssessmentResponse = async (linkId, userId, { id, answers }) => {
-  const assessment = await Assessment.findOne({ sharedLinkId: linkId });
+  const assessment = await Assessment.findOne({
+    sharedLinkId: linkId,
+  }).populate("questions");
   if (!assessment) throw { status: 404, message: "Assessment not found" };
-  console.log("Assessment found:", assessment);
-  if (assessment.expiresAt && assessment.expiresAt < new Date())
+
+  if (assessment.expiresAt && new Date(assessment.expiresAt) < new Date())
     throw { status: 403, message: "Link expired" };
-  console.log("Link is valid for user:", userId);
+
   if (assessment.responses.some((r) => r.id === id)) {
     throw { status: 403, message: "You have already submitted a response" };
   }
-  console.log("Recording response for user:", userId);
+
+  // Step 1: Match questions and submitted answers
+  const questionMap = {};
+  for (const q of assessment.questions) {
+    questionMap[q._id.toString()] = q.answer;
+  }
+
+  let correctCount = 0;
+
+  // Step 2: Validate and score
+  for (const a of answers) {
+    const correctAnswer = questionMap[a.questionId];
+    if (correctAnswer && a.answer === correctAnswer) {
+      correctCount++;
+    }
+  }
+
+  const totalQuestions = assessment.questions.length;
+  const score = correctCount;
+
   const submittedAt = new Date();
-  assessment.responses.push({ id, answers, submittedAt, userId });
+
+  // Step 3: Save result
+  assessment.responses.push({
+    id,
+    userId,
+    answers,
+    submittedAt,
+    score,
+  });
+
   await assessment.save();
-  console.log("Response recorded successfully for user:", userId);
-  return { message: "Response recorded" };
+
+  return {
+    message: "Response recorded",
+    score: score,
+    totalQuestions,
+    correctCount,
+  };
 };
 
 const fetchUserSubmittedResponses = async (userId) => {
@@ -198,13 +237,77 @@ const fetchUserSubmittedResponses = async (userId) => {
       response,
       questions: assessment.questions,
       title: assessment.title,
+      score: response.score,
     };
   });
+};
+
+const fetchAnalytics = async (userId) => {
+  console.log("Fetching analytics for user:", userId);
+  const assessments = await Assessment.find({ createdBy: userId })
+    .select("_id title responses")
+    .sort({ createdAt: -1 })
+    .lean();
+
+  if (!assessments || assessments.length === 0) return [];
+  console.log("Assessments found:", assessments.length);
+  return assessments.map((assessment) => ({
+    id: assessment._id,
+    title: assessment.title,
+    totalResponses: assessment.responses.length,
+  }));
+};
+
+const fetchQuizAnalytics = async (assessmentId) => {
+  const assessment = await Assessment.findById(assessmentId).populate(
+    "questions"
+  );
+
+  if (!assessment) {
+    return res
+      .status(404)
+      .json({ success: false, message: "Assessment not found" });
+  }
+  if (!assessment.responses || assessment.responses.length === 0) {
+    return [];
+  }
+
+  const analytics = assessment.questions.map((question) => {
+    let correctCount = 0;
+    let wrongCount = 0;
+    let totalCount = 0;
+
+    assessment.responses.forEach((response) => {
+      const answerObj = response.answers.find(
+        (a) => a.questionId.toString() === question._id.toString()
+      );
+
+      if (answerObj) {
+        totalCount++;
+        if (answerObj.answer === question.answer) {
+          correctCount++;
+        } else {
+          wrongCount++;
+        }
+      }
+    });
+
+    return {
+      questionId: question._id,
+      question: question.question,
+      correctAnswers: correctCount,
+      wrongAnswers: wrongCount,
+      totalSubmissions: totalCount,
+    };
+  });
+  return analytics;
 };
 
 module.exports = {
   generateMCQs,
   saveQuestions,
+  fetchAnalytics,
+  fetchQuizAnalytics,
   getSharedQuestions,
   fetchUserSubmittedResponses,
   getUserQuizzes,

@@ -21,6 +21,7 @@ const assessmentSchema = new mongoose.Schema(
         id: String,
         userId: String,
         answers: [{ questionId: String, answer: String }],
+        score: Number,
         submittedAt: Date,
       },
     ],
