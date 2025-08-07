@@ -54,7 +54,7 @@ const login = async ({ email, password }) => {
     await sendOtpToEmail(user);
     throw new AppError(
       "User not verified. Please check your email for the OTP.",
-      403
+      399
     );
   }
   const accessToken = signAccessToken(user);
