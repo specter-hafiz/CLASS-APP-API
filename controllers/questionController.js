@@ -117,11 +117,22 @@ const getQuizAnalytics = async (req, res) => {
   }
 };
 
+const fetchResults = async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const responses = await questionService.getResults(id);
+    return res.status(200).json({ success: true, responses });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: error.message });
+  }
+};
 module.exports = {
   generateQuestions,
   getQuizAnalytics,
   getSharedQuestions,
   fetchQuizzes,
+  fetchResults,
   getAnalytics,
   submitAssessment,
   fetchSubmittedResponses,

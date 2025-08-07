@@ -17,6 +17,7 @@ router.post(
 router.get("/fetch", authenticate, questionController.fetchQuizzes);
 router.get("/analytics", authenticate, questionController.getAnalytics);
 router.get("/analytics/:id", authenticate, questionController.getQuizAnalytics);
+router.get("/:id/results", questionController.fetchResults);
 router.get(
   "/fetch/responses",
   authenticate,

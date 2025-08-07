@@ -306,11 +306,29 @@ const fetchQuizAnalytics = async (assessmentId) => {
   return analytics;
 };
 
+const getResults = async (assessmentId) => {
+  const assessment = await Assessment.findById(assessmentId).select(
+    "responses"
+  );
+
+  if (!assessment) {
+    throw new Error("Assessment not found");
+  }
+
+  const formattedResponses = assessment.responses.map((res) => ({
+    id: res.id,
+    score: res.score,
+    submittedAt: res.submittedAt,
+  }));
+
+  return formattedResponses;
+};
 module.exports = {
   generateMCQs,
   saveQuestions,
   fetchAnalytics,
   fetchQuizAnalytics,
+  getResults,
   getSharedQuestions,
   fetchUserSubmittedResponses,
   getUserQuizzes,
