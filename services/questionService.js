@@ -223,7 +223,10 @@ const fetchUserSubmittedResponses = async (userId) => {
   const userIdStr = userId.toString();
   const assessments = await Assessment.find({
     responses: { $elemMatch: { userId: userIdStr } },
-  }).populate("questions");
+  })
+    .populate("questions")
+    .sort({ createdAt: -1 })
+    .lean();
   if (!assessments || assessments.length === 0)
     throw { status: 404, message: "No assessments found for this user" };
   console.log("Assessments found:", assessments.length);
@@ -259,9 +262,9 @@ const fetchAnalytics = async (userId) => {
 };
 
 const fetchQuizAnalytics = async (assessmentId) => {
-  const assessment = await Assessment.findById(assessmentId).populate(
-    "questions"
-  );
+  const assessment = await Assessment.findById(assessmentId)
+    .populate("questions")
+    .sort({ createdAt: -1 });
 
   if (!assessment) {
     return res
