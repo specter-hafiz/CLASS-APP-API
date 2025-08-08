@@ -2,6 +2,11 @@ const User = require("../models/userModel");
 const { hashPassword, comparePassword } = require("../utils/hash");
 const AppError = require("../errors/appError");
 const {
+  uploadToCloudinary,
+  deleteFromCloudinary,
+} = require("../config/cloudinary_config");
+const getPublicIdFromUrl = require("../utils/getPublicIdFromUrl");
+const {
   verifyRefreshToken,
   signAccessToken,
   signRefreshToken,
@@ -161,11 +166,41 @@ const changePassword = async ({ userId, oldPassword, newPassword }) => {
   return true;
 };
 
+const uploadProfileImage = async (userId, file) => {
+  if (!userId) {
+    throw new Error("User ID is required");
+  }
+
+  const user = await User.findById(userId);
+  if (!user) {
+    throw new Error("User not found");
+  }
+
+  // Check if user already has a profile image
+  if (user.profileUrl) {
+    // Extract public_id from the URL to delete the image
+    const publicId = getPublicIdFromUrl(user.profileUrl);
+    if (publicId) {
+      console.log(`Deleting old image from Cloudinary: ${publicId}`);
+      await deleteFromCloudinary(publicId);
+      console.log(`Deleted old image from Cloudinary: ${publicId}`);
+    }
+  }
+
+  // Upload new image
+  const url = await uploadToCloudinary(file.buffer);
+  user.profileUrl = url;
+  console.log(`Profile image uploaded for user ID: ${userId}, URL: ${url}`);
+  await user.save();
+  return url;
+};
+
 module.exports = {
   signup,
   login,
   googleLogin,
   editProfile,
+  uploadProfileImage,
   forgotPassword,
   handleTokenRefresh,
   verifyOtp,

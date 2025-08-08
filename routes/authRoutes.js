@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const authController = require("../controllers/authController");
 const validate = require("../middlewares/validate");
+const { upload } = require("../config/cloudinary_config");
 const {
   signupSchema,
   loginSchema,
@@ -26,6 +27,12 @@ router.post(
   "/forgot-password",
   validate(forgotPasswordSchema),
   authController.forgotPassword
+);
+router.post(
+  "/upload-profile-image",
+  authenticate,
+  upload.single("image"),
+  authController.uploadProfileImage
 );
 router.post(
   "/reset-password",

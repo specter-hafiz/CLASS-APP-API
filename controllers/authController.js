@@ -110,12 +110,28 @@ const changePassword = async (req, res) => {
   }
 };
 
+const uploadProfileImage = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const file = req.file;
+    if (!file) {
+      return res.status(400).json({ message: "No file uploaded" });
+    }
+    const url = await authService.uploadProfileImage(userId, file);
+    res.status(200).json({ message: "Image uploaded successfully", url });
+  } catch (err) {
+    console.error("Error uploading profile image:", err);
+    res.status(500).json({ message: "Failed to upload image" });
+  }
+};
+
 module.exports = {
   signup,
   login,
   googleLogin,
   forgotPassword,
   verifyOtp,
+  uploadProfileImage,
   resendOtp,
   editProfile,
   resetPassword,
