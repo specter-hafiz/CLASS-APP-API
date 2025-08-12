@@ -42,8 +42,8 @@ const refreshToken = async (req, res) => {
 
 const googleLogin = async (req, res) => {
   try {
-    const { token, user } = await authService.googleLogin(req.body);
-    res.status(200).json({ message: "Google login successful", token, user });
+    const { user } = await authService.googleLogin(req.body);
+    res.status(200).json({ message: "Google login successful", user });
   } catch (err) {
     res.status(400).json({ message: err.message });
   }

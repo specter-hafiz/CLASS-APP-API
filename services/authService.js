@@ -1,6 +1,8 @@
 const User = require("../models/userModel");
 const { hashPassword, comparePassword } = require("../utils/hash");
 const AppError = require("../errors/appError");
+const { OAuth2Client } = require("google-auth-library");
+const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 const {
   uploadToCloudinary,
   deleteFromCloudinary,
@@ -74,15 +76,40 @@ const login = async ({ email, password }) => {
 
   return { user: userToSend };
 };
+const googleLogin = async ({ token }) => {
+  const ticket = await client.verifyIdToken({
+    idToken: token,
+    audience: process.env.GOOGLE_CLIENT_ID,
+  });
 
-const googleLogin = async ({ email, name, googleId }) => {
+  const {
+    email,
+    name,
+    picture: profileUrl,
+    sub: googleId,
+  } = ticket.getPayload();
+
   let user = await User.findOne({ email });
-  if (!user) {
-    user = new User({ email, name, googleId, verified: true });
-    await user.save();
+
+  if (user) {
+    if (!user.googleId) {
+      throw new Error("Account exists with email and password.");
+    }
+  } else {
+    user = await User.create({
+      email,
+      name,
+      googleId,
+      profileUrl,
+    });
   }
-  const token = signAccessToken(user);
-  return { token, user };
+
+  // Issue new tokens
+  user.accessToken = signAccessToken(user);
+  user.refreshToken = signRefreshToken(user);
+  await user.save();
+
+  return { user: sanitizeUser(user) };
 };
 
 const forgotPassword = async (email) => {
@@ -107,12 +134,9 @@ const verifyOtp = async ({ email, otp }) => {
   const accessToken = signAccessToken(user);
   const refreshToken = signRefreshToken(user);
   user.refreshToken = refreshToken;
-  delete user.password;
-  delete user.otp;
-  delete user.otpExpires;
   await user.save();
 
-  return { succes: true, accessToken, refreshToken, user };
+  return { succes: true, accessToken, refreshToken, user: sanitizeUser(user) };
 };
 
 const resetPassword = async ({ email, newPassword }) => {
@@ -194,6 +218,14 @@ const uploadProfileImage = async (userId, file) => {
   await user.save();
   return url;
 };
+
+function sanitizeUser(user) {
+  const obj = user.toObject();
+  delete obj.password;
+  delete obj.otp;
+  delete obj.otpExpires;
+  return obj;
+}
 
 module.exports = {
   signup,
