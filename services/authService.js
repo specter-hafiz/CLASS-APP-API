@@ -54,7 +54,9 @@ const handleTokenRefresh = async (refreshToken) => {
 const login = async ({ email, password }) => {
   const user = await User.findOne({ email });
   if (!user) throw new Error("User not found");
-
+  if (user.googleId) {
+    throw new Error("User logged in with Google");
+  }
   const match = await comparePassword(password, user.password);
   if (!match) throw new Error("Invalid credentials");
   if (!user.isVerified) {
@@ -101,6 +103,7 @@ const googleLogin = async ({ token }) => {
       name,
       googleId,
       profileUrl,
+      isVerified: true, // Google users are considered verified
     });
   }
 
@@ -116,6 +119,9 @@ const forgotPassword = async (email) => {
   console.log(`Sending OTP to email: ${email}`);
   const user = await User.findOne({ email });
   if (!user) throw new Error("Email not found");
+  if (user.googleId) {
+    throw new Error("User logged in with Google");
+  }
   if (user.otpExpires && user.otpExpires > Date.now()) {
     return user.email; // OTP already sent, return email without sending again
   }
