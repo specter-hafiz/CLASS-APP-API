@@ -53,6 +53,7 @@ const handleTokenRefresh = async (refreshToken) => {
 
 const login = async ({ email, password }) => {
   const user = await User.findOne({ email });
+  console.log(email);
   if (!user) throw new Error("User not found");
   if (user.googleId) {
     throw new Error("User logged in with Google");
@@ -130,6 +131,7 @@ const forgotPassword = async (email) => {
 };
 
 const verifyOtp = async ({ email, otp }) => {
+  console.log(`Verify email:${email}`);
   const user = await User.findOne({ email, otp });
   if (!user || user.otpExpires < Date.now()) {
     throw new Error("Invalid or expired OTP");
