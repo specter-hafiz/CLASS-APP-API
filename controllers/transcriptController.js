@@ -2,7 +2,6 @@ const transcriptService = require("../services/transcriptService");
 
 const getTranscripts = async (req, res) => {
   const userId = req.user._id;
-  console.log("Fetching transcripts for user:", userId);
   const transcripts = await transcriptService.getTranscriptsByUserId(userId);
   return res.status(200).json({ success: true, transcripts });
 };
@@ -42,7 +41,6 @@ const deleteTranscriptById = async (req, res) => {
       .status(200)
       .json({ success: true, message: "Transcript deleted successfully" });
   } catch (error) {
-    console.error("Error deleting transcript:", error.message);
     return res
       .status(500)
       .json({ success: false, message: "Internal server error" });

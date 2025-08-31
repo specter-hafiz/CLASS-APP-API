@@ -33,7 +33,6 @@ ${passage}
     const text = response.text();
     return parseMCQs(text);
   } catch (error) {
-    console.error("Gemini SDK Error:", error.message);
     return [];
   }
 }
@@ -60,9 +59,7 @@ function parseMCQs(rawText) {
         options: Object.values(options),
         answer: answerText,
       });
-    } catch (err) {
-      console.warn("Skipping malformed question block:", err.message);
-    }
+    } catch (err) {}
   }
 
   return questions;
@@ -116,7 +113,6 @@ const getUserQuizzes = async (userId) => {
 };
 
 const getSharedQuestions = async (sharedLinkId, id, accessPassword) => {
-  console.log("Fetching shared questions for link ID:", sharedLinkId);
   const assessment = await Assessment.findOne({
     sharedLinkId: sharedLinkId,
     accessPassword,
@@ -124,9 +120,7 @@ const getSharedQuestions = async (sharedLinkId, id, accessPassword) => {
     .populate("questions")
     .sort({ createdAt: -1 });
   if (!assessment) throw { status: 404, message: "Assessment not found" };
-  console.log("Assessment found:", assessment);
   if (assessment.expiresAt && assessment.expiresAt < new Date().toISOString()) {
-    console.log("Link expired for user:", id);
     throw { status: 403, message: "Link expired" };
   }
   const submitted = assessment.responses.find((r) => r.id === id);
@@ -136,10 +130,8 @@ const getSharedQuestions = async (sharedLinkId, id, accessPassword) => {
       message: "You have already submitted a response for this assessment.",
     };
   }
-  console.log("Link is valid for user:", id);
   const existing = assessment.attempts.find((a) => a.id === id);
   if (existing) {
-    console.log("Existing attempt found for user:", id);
     return {
       questions: assessment.questions,
       startedAt: existing.startedAt,
@@ -152,11 +144,7 @@ const getSharedQuestions = async (sharedLinkId, id, accessPassword) => {
   const startedAt = new Date();
   assessment.attempts.push({ id, startedAt });
   await assessment.save();
-  console.log("New attempt recorded for user:", id);
-  console.log("Assessment started at:", startedAt);
-  console.log("Assessment duration:", assessment.duration);
-  console.log("Questions available:", assessment.questions.length);
-  console.log("Questions details:", assessment.questions);
+
   return {
     questions: assessment.questions,
     startedAt,
@@ -219,7 +207,6 @@ const submitAssessmentResponse = async (linkId, userId, { id, answers }) => {
 };
 
 const fetchUserSubmittedResponses = async (userId) => {
-  console.log("Fetching submitted responses for user:", userId);
   const userIdStr = userId.toString();
   const assessments = await Assessment.find({
     responses: { $elemMatch: { userId: userIdStr } },
@@ -229,13 +216,9 @@ const fetchUserSubmittedResponses = async (userId) => {
     .lean();
   if (!assessments || assessments.length === 0)
     throw { status: 404, message: "No assessments found for this user" };
-  console.log("Assessments found:", assessments.length);
-  console.log("Assessments details:", assessments);
   return assessments.map((assessment) => {
     const response = assessment.responses.find((r) => r.userId === userIdStr);
     if (!response) throw { status: 404, message: "Response not found" };
-    console.log("Response found for user:", userId);
-    console.log("Response details:", response);
     return {
       response,
       questions: assessment.questions,
@@ -246,14 +229,12 @@ const fetchUserSubmittedResponses = async (userId) => {
 };
 
 const fetchAnalytics = async (userId) => {
-  console.log("Fetching analytics for user:", userId);
   const assessments = await Assessment.find({ createdBy: userId })
     .select("_id title responses")
     .sort({ createdAt: -1 })
     .lean();
 
   if (!assessments || assessments.length === 0) return [];
-  console.log("Assessments found:", assessments.length);
   return assessments.map((assessment) => ({
     id: assessment._id,
     title: assessment.title,

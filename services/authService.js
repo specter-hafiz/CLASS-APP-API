@@ -21,7 +21,6 @@ const signup = async ({ email, password, name }) => {
 
   const hashedPassword = await hashPassword(password);
   const user = new User({ email, password: hashedPassword, name });
-  console.log(user);
   await sendOtpToEmail(user);
   return user.email;
 };
@@ -53,7 +52,6 @@ const handleTokenRefresh = async (refreshToken) => {
 
 const login = async ({ email, password }) => {
   const user = await User.findOne({ email });
-  console.log(email);
   if (!user) throw new Error("User not found");
   if (user.googleId) {
     throw new Error("User logged in with Google");
@@ -117,7 +115,6 @@ const googleLogin = async ({ token }) => {
 };
 
 const forgotPassword = async (email) => {
-  console.log(`Sending OTP to email: ${email}`);
   const user = await User.findOne({ email });
   if (!user) throw new Error("Email not found");
   if (user.googleId) {
@@ -131,20 +128,30 @@ const forgotPassword = async (email) => {
 };
 
 const verifyOtp = async ({ email, otp }) => {
-  console.log(`Verify email:${email}`);
-  const user = await User.findOne({ email, otp });
-  if (!user || user.otpExpires < Date.now()) {
-    throw new Error("Invalid or expired OTP");
+  const user = await User.findOne({ email });
+  if (!user) {
+    throw new Error("User not found");
   }
+
+  if (user.otp !== otp) {
+    throw new Error("Invalid OTP");
+  }
+
+  if (user.otpExpires < Date.now()) {
+    throw new Error("OTP has expired");
+  }
+
   user.isVerified = true;
   user.otp = null;
   user.otpExpires = null;
+
   const accessToken = signAccessToken(user);
   const refreshToken = signRefreshToken(user);
   user.refreshToken = refreshToken;
+
   await user.save();
 
-  return { succes: true, accessToken, refreshToken, user: sanitizeUser(user) };
+  return { success: true, accessToken, refreshToken, user: sanitizeUser(user) };
 };
 
 const resetPassword = async ({ email, newPassword }) => {
@@ -159,7 +166,6 @@ const resetPassword = async ({ email, newPassword }) => {
 };
 
 const editProfile = async (userId, updates) => {
-  console.log(`Editing profile for user ID: ${userId}`);
   const user = await User.findByIdAndUpdate(userId, updates, {
     new: true,
     runValidators: true,
@@ -185,7 +191,6 @@ const resendOtp = async (email) => {
 };
 
 const changePassword = async ({ userId, oldPassword, newPassword }) => {
-  console.log(`Changing password for user ID: ${userId}`);
   const user = await User.findById(userId);
   if (!user) throw new Error("User not found");
 
@@ -194,7 +199,6 @@ const changePassword = async ({ userId, oldPassword, newPassword }) => {
 
   user.password = await hashPassword(newPassword);
   await user.save();
-  console.log("Password changed successfully for user:", userId);
   return true;
 };
 
@@ -213,9 +217,7 @@ const uploadProfileImage = async (userId, file) => {
     // Extract public_id from the URL to delete the image
     const publicId = getPublicIdFromUrl(user.profileUrl);
     if (publicId) {
-      console.log(`Deleting old image from Cloudinary: ${publicId}`);
       await deleteFromCloudinary(publicId);
-      console.log(`Deleted old image from Cloudinary: ${publicId}`);
     }
   }
 
