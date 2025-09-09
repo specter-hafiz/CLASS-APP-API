@@ -21,8 +21,8 @@ const authenticate = async (req, res, next) => {
     }
 
     req.user = user;
-    console.log("Authenticated user:", user._id);
     next();
+    s;
   } catch (err) {
     return res.status(401).json({ message: "Invalid or expired token" });
   }

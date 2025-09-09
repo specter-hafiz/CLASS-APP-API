@@ -224,7 +224,6 @@ const uploadProfileImage = async (userId, file) => {
   // Upload new image
   const url = await uploadToCloudinary(file.buffer);
   user.profileUrl = url;
-  console.log(`Profile image uploaded for user ID: ${userId}, URL: ${url}`);
   await user.save();
   return url;
 };

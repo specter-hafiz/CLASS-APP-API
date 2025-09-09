@@ -1,0 +1,16 @@
+.env
+.env.local
+node_modules
+dist
+.venv
+__pycache__
+*.pyc
+.idea
+.vscode
+.DS_Store
+*.log
+*.sqlite3
+*.db
+*.egg-info
+*.iml
+*.swp

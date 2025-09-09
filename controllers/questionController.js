@@ -80,10 +80,8 @@ const submitAssessment = async (req, res) => {
 
 const getAnalytics = async (req, res) => {
   const userId = req.user._id;
-  console.log("Fetching analytics for user:", userId);
   try {
     const analytics = await questionService.fetchAnalytics(userId);
-    console.log("Fetched analytics:", analytics);
     res.json({ success: true, analytics });
   } catch (err) {
     res.status(err.status || 500).json({ message: err.message });
@@ -92,10 +90,8 @@ const getAnalytics = async (req, res) => {
 
 const getQuizAnalytics = async (req, res) => {
   const quizId = req.params.id;
-  console.log("Fetching analytics for quiz:", quizId);
   try {
     const analytics = await questionService.fetchQuizAnalytics(quizId);
-    console.log("Fetched quiz analytics:", analytics);
     res.json({ success: true, analytics });
   } catch (err) {
     res.status(err.status || 500).json({ message: err.message });

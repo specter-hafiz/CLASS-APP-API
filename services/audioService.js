@@ -24,7 +24,6 @@ const uploadToSupabase = async (file) => {
   const { data } = supabase.storage
     .from("audio-recordings")
     .getPublicUrl(filePath);
-  console.log("Uploaded audio file accessible at:", data.publicUrl);
   return data.publicUrl;
 };
 
